@@ -24,18 +24,21 @@ const DEFAULT_FIELDS = {
       "metrics.conversions"
     ]
   },
+
   facebook_ads: {
-  fields: [
-    "campaign_name",
-    "impressions",
-    "clicks",
-    "spend",
-    "actions"
-  ],
-  settings: {
-    attribution_window: "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
-  }
-},
+    fields: [
+      "campaign.name",
+      "impressions",
+      "clicks",
+      "spend",
+      "actions"
+    ],
+    settings: {
+      attribution_window:
+        "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
+    }
+  },
+
   ga4: {
     fields: [
       "sessions",
@@ -44,6 +47,7 @@ const DEFAULT_FIELDS = {
       "screenPageViews"
     ]
   },
+
   google_search_console: {
     fields: [
       "clicks",
@@ -52,6 +56,7 @@ const DEFAULT_FIELDS = {
       "position"
     ]
   },
+
   google_business_profile: {
     data_view: "performance",
     fields: [
@@ -61,19 +66,22 @@ const DEFAULT_FIELDS = {
       "business_direction_requests"
     ]
   },
+
   facebook_insights: {
     data_view: "page",
     fields: [
-      "page_impressions",
-      "page_engaged_users"
+      "page_unique_views",
+      "page_views",
+      "page_paid_views",
+      "page_organic_views"
     ]
   },
+
   instagram_insights: {
     data_view: "account",
     fields: [
-      "impressions",
-      "reach",
-      "profile_views"
+      "profile_views",
+      "views"
     ]
   }
 };
@@ -172,10 +180,9 @@ async function buildClientDirectory() {
 function findClient(clients, searchName) {
   const normalizedSearch = searchName.toLowerCase();
 
-  return clients.find(client =>
-    client.name.toLowerCase() === normalizedSearch
-  ) || clients.find(client =>
-    client.name.toLowerCase().includes(normalizedSearch)
+  return (
+    clients.find(client => client.name.toLowerCase() === normalizedSearch) ||
+    clients.find(client => client.name.toLowerCase().includes(normalizedSearch))
   );
 }
 
@@ -188,7 +195,7 @@ async function getClientPerformance(client, start, end) {
     if (!config) {
       results[integration_id] = {
         status: "skipped",
-        message: "No default fields configured"
+        message: "No default fields configured yet for this integration"
       };
       continue;
     }
@@ -208,6 +215,10 @@ async function getClientPerformance(client, start, end) {
 
     if (config.data_view) {
       queryBody.data_view = config.data_view;
+    }
+
+    if (config.settings) {
+      queryBody.settings = config.settings;
     }
 
     const data = await rnPost("/query", queryBody);
@@ -293,10 +304,7 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({
         status: "ok",
         client: client.name,
-        date_range: {
-          start,
-          end
-        },
+        date_range: { start, end },
         performance
       }, null, 2));
       return;
@@ -398,7 +406,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const data = await rnPost("/query", {
+      const queryBody = {
         integration_id: requestBody.integration_id,
         connection_key: requestBody.connection_key,
         account_id: requestBody.account_id,
@@ -410,7 +418,13 @@ const server = http.createServer(async (req, res) => {
           end: requestBody.end
         },
         limit: requestBody.limit || 100
-      });
+      };
+
+      if (requestBody.settings) {
+        queryBody.settings = requestBody.settings;
+      }
+
+      const data = await rnPost("/query", queryBody);
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(data, null, 2));
