@@ -263,7 +263,35 @@ function sumRows(rows = [], field) {
 
 function buildReportSummary(performance) {
   const summary = {};
-  
+  function compareValues(current, previous) {
+  const change = current - previous;
+  const change_percent = previous
+    ? Number(((change / previous) * 100).toFixed(2))
+    : null;
+
+  return {
+    current,
+    previous,
+    change,
+    change_percent
+  };
+}
+
+function buildComparison(currentSummary, previousSummary) {
+  const comparison = {};
+
+  for (const section of Object.keys(currentSummary)) {
+    comparison[section] = {};
+
+    for (const metric of Object.keys(currentSummary[section])) {
+      comparison[section][metric] = compareValues(
+        Number(currentSummary[section][metric] || 0),
+        Number(previousSummary?.[section]?.[metric] || 0)
+      );
+    }
+  }
+
+  return comparison;
 }
 
   const ga4Rows = performance.ga4?.response?.data?.rows || [];
@@ -451,29 +479,20 @@ async function getClientPerformance(client, start, end) {
 
   return results;
 }
-
-function roundNumber(value) {
-  return Number(Number(value || 0).toFixed(2));
-
-}
-
 function compareValues(current, previous) {
-  const roundedCurrent = roundNumber(current);
-  const roundedPrevious = roundNumber(previous);
-
-  const change = roundNumber(roundedCurrent - roundedPrevious);
-
-  const change_percent = roundedPrevious
-    ? roundNumber((change / roundedPrevious) * 100)
+  const change = current - previous;
+  const change_percent = previous
+    ? Number(((change / previous) * 100).toFixed(2))
     : null;
 
   return {
-    current: roundedCurrent,
-    previous: roundedPrevious,
+    current,
+    previous,
     change,
     change_percent
   };
 }
+
 function buildComparison(currentSummary, previousSummary) {
   const comparison = {};
 
