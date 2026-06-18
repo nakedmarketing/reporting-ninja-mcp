@@ -26,17 +26,17 @@ const DEFAULT_FIELDS = {
   },
 
   facebook_ads: {
-  fields: [
-    "campaign_name",
-    "impressions",
-    "clicks",
-    "spend"
-  ],
-  settings: {
-    attribution_window:
-      "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
-  }
-},
+    fields: [
+      "campaign_name",
+      "impressions",
+      "clicks",
+      "spend"
+    ],
+    settings: {
+      attribution_window:
+        "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
+    }
+  },
 
   ga4: {
     fields: [
@@ -79,14 +79,15 @@ const DEFAULT_FIELDS = {
   },
 
   instagram_insights: {
-  data_view: "account",
-  fields: [
-    "views",
-    "reach",
-    "accounts_engaged",
-    "engagement",
-    "profile_links_taps"
-  ]
+    data_view: "account",
+    fields: [
+      "views",
+      "reach",
+      "accounts_engaged",
+      "engagement",
+      "profile_links_taps"
+    ]
+  }
 };
 
 async function rnPost(path, body = {}) {
