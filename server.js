@@ -263,6 +263,36 @@ function sumRows(rows = [], field) {
 
 function buildReportSummary(performance) {
   const summary = {};
+  function compareValues(current, previous) {
+  const change = current - previous;
+  const change_percent = previous
+    ? Number(((change / previous) * 100).toFixed(2))
+    : null;
+
+  return {
+    current,
+    previous,
+    change,
+    change_percent
+  };
+}
+
+function buildComparison(currentSummary, previousSummary) {
+  const comparison = {};
+
+  for (const section of Object.keys(currentSummary)) {
+    comparison[section] = {};
+
+    for (const metric of Object.keys(currentSummary[section])) {
+      comparison[section][metric] = compareValues(
+        Number(currentSummary[section][metric] || 0),
+        Number(previousSummary?.[section]?.[metric] || 0)
+      );
+    }
+  }
+
+  return comparison;
+}
 
   const ga4Rows = performance.ga4?.response?.data?.rows || [];
   if (ga4Rows.length) {
@@ -567,6 +597,64 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/compare")) {
+  const clientName = decodeURIComponent(
+    url.pathname.replace("/client/", "").replace("/compare", "")
+  );
+
+  const current_start = url.searchParams.get("current_start");
+  const current_end = url.searchParams.get("current_end");
+  const previous_start = url.searchParams.get("previous_start");
+  const previous_end = url.searchParams.get("previous_end");
+
+  if (!current_start || !current_end || !previous_start || !previous_end) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      status: "error",
+      message: "Please provide current_start, current_end, previous_start and previous_end"
+    }, null, 2));
+    return;
+  }
+
+  const clients = await buildClientDirectory();
+  const client = findClient(clients, clientName);
+
+  if (!client) {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      status: "error",
+      message: `Client not found: ${clientName}`
+    }, null, 2));
+    return;
+  }
+
+  const currentPerformance = await getClientPerformance(client, current_start, current_end);
+  const previousPerformance = await getClientPerformance(client, previous_start, previous_end);
+
+  const currentSummary = buildReportSummary(currentPerformance);
+  const previousSummary = buildReportSummary(previousPerformance);
+
+  const comparison = buildComparison(currentSummary, previousSummary);
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({
+    status: "ok",
+    client: client.name,
+    current_period: {
+      start: current_start,
+      end: current_end
+    },
+    previous_period: {
+      start: previous_start,
+      end: previous_end
+    },
+    current_summary: currentSummary,
+    previous_summary: previousSummary,
+    comparison
+  }, null, 2));
+  return;
+}
+    
     if (url.pathname.startsWith("/client/")) {
       const clientName = decodeURIComponent(url.pathname.replace("/client/", ""));
       const clients = await buildClientDirectory();
