@@ -492,7 +492,25 @@ function compareValues(current, previous) {
     change_percent
   };
 }
+function roundNumber(value) {
+  return Number(Number(value || 0).toFixed(2));
+}
 
+function compareValues(current, previous) {
+  const roundedCurrent = roundNumber(current);
+  const roundedPrevious = roundNumber(previous);
+  const change = roundNumber(roundedCurrent - roundedPrevious);
+  const change_percent = roundedPrevious
+    ? roundNumber((change / roundedPrevious) * 100)
+    : null;
+
+  return {
+    current: roundedCurrent,
+    previous: roundedPrevious,
+    change,
+    change_percent
+  };
+}
 function buildComparison(currentSummary, previousSummary) {
   const comparison = {};
 
