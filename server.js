@@ -403,72 +403,76 @@ function asText(data) {
 
 /* MCP SERVER */
 
-const mcpServer = new McpServer({
-  name: "reporting-ninja",
-  version: "1.0.0"
-});
+function createMcpServer() {
+  const mcpServer = new McpServer({
+    name: "reporting-ninja",
+    version: "1.0.0"
+  });
 
-mcpServer.registerTool(
-  "list_clients",
-  {
-    title: "List Clients",
-    description: "List all clients available from Reporting Ninja.",
-    inputSchema: {}
-  },
-  async () => {
-    const clients = await buildClientDirectory();
-    return asText({
-      status: "ok",
-      count: clients.length,
-      clients: clients.map(client => ({
-        name: client.name,
-        integrations: Object.keys(client.integrations)
-      }))
-    });
-  }
-);
-
-mcpServer.registerTool(
-  "get_client_report",
-  {
-    title: "Get Client Report",
-    description: "Get a summarised marketing performance report for a client and date range.",
-    inputSchema: {
-      client_name: z.string(),
-      start: z.string(),
-      end: z.string()
+  mcpServer.registerTool(
+    "list_clients",
+    {
+      title: "List Clients",
+      description: "List all clients available from Reporting Ninja.",
+      inputSchema: {}
+    },
+    async () => {
+      const clients = await buildClientDirectory();
+      return asText({
+        status: "ok",
+        count: clients.length,
+        clients: clients.map(client => ({
+          name: client.name,
+          integrations: Object.keys(client.integrations)
+        }))
+      });
     }
-  },
-  async ({ client_name, start, end }) => {
-    return asText(await getClientReport(client_name, start, end));
-  }
-);
+  );
 
-mcpServer.registerTool(
-  "compare_client_periods",
-  {
-    title: "Compare Client Periods",
-    description: "Compare a client's marketing performance across two date ranges.",
-    inputSchema: {
-      client_name: z.string(),
-      current_start: z.string(),
-      current_end: z.string(),
-      previous_start: z.string(),
-      previous_end: z.string()
+  mcpServer.registerTool(
+    "get_client_report",
+    {
+      title: "Get Client Report",
+      description: "Get a summarised marketing performance report for a client and date range.",
+      inputSchema: {
+        client_name: z.string(),
+        start: z.string(),
+        end: z.string()
+      }
+    },
+    async ({ client_name, start, end }) => {
+      return asText(await getClientReport(client_name, start, end));
     }
-  },
-  async ({ client_name, current_start, current_end, previous_start, previous_end }) => {
-    return asText(
-      await compareClientPeriods(
-        client_name,
-        current_start,
-        current_end,
-        previous_start,
-        previous_end
-      )
-    );
-  }
-);
+  );
+
+  mcpServer.registerTool(
+    "compare_client_periods",
+    {
+      title: "Compare Client Periods",
+      description: "Compare a client's marketing performance across two date ranges.",
+      inputSchema: {
+        client_name: z.string(),
+        current_start: z.string(),
+        current_end: z.string(),
+        previous_start: z.string(),
+        previous_end: z.string()
+      }
+    },
+    async ({ client_name, current_start, current_end, previous_start, previous_end }) => {
+      return asText(
+        await compareClientPeriods(
+          client_name,
+          current_start,
+          current_end,
+          previous_start,
+          previous_end
+        )
+      );
+    }
+  );
+
+  return mcpServer;
+}
 
 /* HTTP SERVER */
 
