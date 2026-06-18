@@ -26,18 +26,18 @@ const DEFAULT_FIELDS = {
   },
 
   facebook_ads: {
-  fields: [
-    "campaign_name",
-    "impressions",
-    "clicks",
-    "spend",
-    "actions"
-  ],
-  settings: {
-    attribution_window:
-      "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
-  }
-},
+    fields: [
+      "campaign_name",
+      "impressions",
+      "clicks",
+      "spend",
+      "actions"
+    ],
+    settings: {
+      attribution_window:
+        "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
+    }
+  },
 
   ga4: {
     fields: [
@@ -70,18 +70,24 @@ const DEFAULT_FIELDS = {
   facebook_insights: {
     data_view: "page",
     fields: [
-      "page_unique_views",
-      "page_views",
-      "page_paid_views",
-      "page_organic_views"
+      "page_media_view",
+      "page_views_total",
+      "page_post_engagements",
+      "page_total_actions",
+      "page_follows",
+      "page_daily_follows"
     ]
   },
 
   instagram_insights: {
     data_view: "account",
     fields: [
-      "profile_views",
-      "views"
+      "views",
+      "reach",
+      "accounts_engaged",
+      "engagement",
+      "follower_count",
+      "profile_links_taps"
     ]
   }
 };
@@ -213,13 +219,8 @@ async function getClientPerformance(client, start, end) {
       limit: 100
     };
 
-    if (config.data_view) {
-      queryBody.data_view = config.data_view;
-    }
-
-    if (config.settings) {
-      queryBody.settings = config.settings;
-    }
+    if (config.data_view) queryBody.data_view = config.data_view;
+    if (config.settings) queryBody.settings = config.settings;
 
     const data = await rnPost("/query", queryBody);
 
@@ -249,7 +250,6 @@ const server = http.createServer(async (req, res) => {
           single_client: "/client/Sunshine%20Joinery",
           performance: "/client/Sunshine%20Joinery/performance?start=2026-05-01&end=2026-05-31",
           all_connections: "/connections",
-          single_connection: "/connections/google_ads",
           fields: "/fields/google_ads?data_view=campaign",
           query: "/query"
         }
@@ -281,7 +281,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
           status: "error",
-          message: "Please provide start and end dates, e.g. ?start=2026-05-01&end=2026-05-31"
+          message: "Please provide start and end dates"
         }, null, 2));
         return;
       }
@@ -315,45 +315,13 @@ const server = http.createServer(async (req, res) => {
       const clients = await buildClientDirectory();
       const client = findClient(clients, clientName);
 
-      if (!client) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: `Client not found: ${clientName}`
-        }, null, 2));
-        return;
-      }
-
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        client
-      }, null, 2));
+      res.end(JSON.stringify({ status: "ok", client }, null, 2));
       return;
     }
 
     if (url.pathname === "/connections") {
       const data = await getAllConnections();
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data, null, 2));
-      return;
-    }
-
-    if (url.pathname.startsWith("/connections/")) {
-      const integration_id = url.pathname.split("/")[2];
-
-      if (!ALLOWED_INTEGRATIONS.includes(integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
-      const data = await rnPost("/connections", { integration_id });
-
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(data, null, 2));
       return;
@@ -363,20 +331,8 @@ const server = http.createServer(async (req, res) => {
       const integration_id = url.pathname.split("/")[2];
       const data_view = url.searchParams.get("data_view");
 
-      if (!ALLOWED_INTEGRATIONS.includes(integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
       const body = { integration_id };
-
-      if (data_view) {
-        body.data_view = data_view;
-      }
+      if (data_view) body.data_view = data_view;
 
       const data = await rnPost("/fields", body);
 
@@ -397,15 +353,6 @@ const server = http.createServer(async (req, res) => {
 
       const requestBody = await readJsonBody(req);
 
-      if (!ALLOWED_INTEGRATIONS.includes(requestBody.integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
       const queryBody = {
         integration_id: requestBody.integration_id,
         connection_key: requestBody.connection_key,
@@ -420,9 +367,7 @@ const server = http.createServer(async (req, res) => {
         limit: requestBody.limit || 100
       };
 
-      if (requestBody.settings) {
-        queryBody.settings = requestBody.settings;
-      }
+      if (requestBody.settings) queryBody.settings = requestBody.settings;
 
       const data = await rnPost("/query", queryBody);
 
