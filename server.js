@@ -43,8 +43,6 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/sunshine/fields") {
       const data = await rnPost("/fields", {
         integration_id: TEST_CLIENT.integration_id,
-        connection_key: TEST_CLIENT.connection_key,
-        account_id: TEST_CLIENT.account_id,
         data_view: "campaign"
       });
 
@@ -68,8 +66,8 @@ const server = http.createServer(async (req, res) => {
         ],
         date_range: {
           preset: "custom",
-          start_date: "2026-05-01",
-          end_date: "2026-05-31"
+          start: "2026-05-01",
+          end: "2026-05-31"
         },
         limit: 100
       });
@@ -80,10 +78,16 @@ const server = http.createServer(async (req, res) => {
     }
 
     res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Route not found" }, null, 2));
+    res.end(JSON.stringify({
+      status: "error",
+      message: "Route not found"
+    }, null, 2));
   } catch (error) {
     res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: error.message }, null, 2));
+    res.end(JSON.stringify({
+      status: "error",
+      message: error.message
+    }, null, 2));
   }
 });
 
