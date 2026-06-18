@@ -479,7 +479,36 @@ async function getClientPerformance(client, start, end) {
 
   return results;
 }
+function compareValues(current, previous) {
+  const change = current - previous;
+  const change_percent = previous
+    ? Number(((change / previous) * 100).toFixed(2))
+    : null;
 
+  return {
+    current,
+    previous,
+    change,
+    change_percent
+  };
+}
+
+function buildComparison(currentSummary, previousSummary) {
+  const comparison = {};
+
+  for (const section of Object.keys(currentSummary)) {
+    comparison[section] = {};
+
+    for (const metric of Object.keys(currentSummary[section])) {
+      comparison[section][metric] = compareValues(
+        Number(currentSummary[section][metric] || 0),
+        Number(previousSummary?.[section]?.[metric] || 0)
+      );
+    }
+  }
+
+  return comparison;
+}
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
