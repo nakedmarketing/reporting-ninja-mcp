@@ -13,6 +13,68 @@ const ALLOWED_INTEGRATIONS = [
   "instagram_insights"
 ];
 
+const DEFAULT_FIELDS = {
+  google_ads: {
+    data_view: "campaign",
+    fields: [
+      "campaign.name",
+      "metrics.impressions",
+      "metrics.clicks",
+      "metrics.cost_micros",
+      "metrics.conversions"
+    ]
+  },
+  facebook_ads: {
+    fields: [
+      "campaign.name",
+      "impressions",
+      "clicks",
+      "spend",
+      "actions"
+    ]
+  },
+  ga4: {
+    fields: [
+      "sessions",
+      "totalUsers",
+      "conversions",
+      "screenPageViews"
+    ]
+  },
+  google_search_console: {
+    fields: [
+      "clicks",
+      "impressions",
+      "ctr",
+      "position"
+    ]
+  },
+  google_business_profile: {
+    data_view: "performance",
+    fields: [
+      "business_impressions",
+      "call_clicks",
+      "website_clicks",
+      "business_direction_requests"
+    ]
+  },
+  facebook_insights: {
+    data_view: "page",
+    fields: [
+      "page_impressions",
+      "page_engaged_users"
+    ]
+  },
+  instagram_insights: {
+    data_view: "account",
+    fields: [
+      "impressions",
+      "reach",
+      "profile_views"
+    ]
+  }
+};
+
 async function rnPost(path, body = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
@@ -69,9 +131,7 @@ async function buildClientDirectory() {
 
   for (const integration_id of ALLOWED_INTEGRATIONS) {
     const integrationResponse = allConnections[integration_id];
-
-    const connections =
-      integrationResponse?.data?.connections || [];
+    const connections = integrationResponse?.data?.connections || [];
 
     for (const connection of connections) {
       const accounts = connection.accounts || [];
@@ -116,6 +176,51 @@ function findClient(clients, searchName) {
   );
 }
 
+async function getClientPerformance(client, start, end) {
+  const results = {};
+
+  for (const [integration_id, account] of Object.entries(client.integrations)) {
+    const config = DEFAULT_FIELDS[integration_id];
+
+    if (!config) {
+      results[integration_id] = {
+        status: "skipped",
+        message: "No default fields configured"
+      };
+      continue;
+    }
+
+    const queryBody = {
+      integration_id,
+      connection_key: account.connection_key,
+      account_id: account.account_id,
+      fields: config.fields,
+      date_range: {
+        preset: "custom",
+        start,
+        end
+      },
+      limit: 100
+    };
+
+    if (config.data_view) {
+      queryBody.data_view = config.data_view;
+    }
+
+    const data = await rnPost("/query", queryBody);
+
+    results[integration_id] = {
+      account_name: account.account_name,
+      account_id: account.account_id,
+      connection_key: account.connection_key,
+      query: queryBody,
+      response: data
+    };
+  }
+
+  return results;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -128,6 +233,7 @@ const server = http.createServer(async (req, res) => {
         routes: {
           clients: "/clients",
           single_client: "/client/Sunshine%20Joinery",
+          performance: "/client/Sunshine%20Joinery/performance?start=2026-05-01&end=2026-05-31",
           all_connections: "/connections",
           single_connection: "/connections/google_ads",
           fields: "/fields/google_ads?data_view=campaign",
@@ -145,6 +251,50 @@ const server = http.createServer(async (req, res) => {
         status: "ok",
         count: clients.length,
         clients
+      }, null, 2));
+      return;
+    }
+
+    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/performance")) {
+      const clientName = decodeURIComponent(
+        url.pathname.replace("/client/", "").replace("/performance", "")
+      );
+
+      const start = url.searchParams.get("start");
+      const end = url.searchParams.get("end");
+
+      if (!start || !end) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          status: "error",
+          message: "Please provide start and end dates, e.g. ?start=2026-05-01&end=2026-05-31"
+        }, null, 2));
+        return;
+      }
+
+      const clients = await buildClientDirectory();
+      const client = findClient(clients, clientName);
+
+      if (!client) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          status: "error",
+          message: `Client not found: ${clientName}`
+        }, null, 2));
+        return;
+      }
+
+      const performance = await getClientPerformance(client, start, end);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        client: client.name,
+        date_range: {
+          start,
+          end
+        },
+        performance
       }, null, 2));
       return;
     }
