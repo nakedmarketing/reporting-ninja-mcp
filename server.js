@@ -37,23 +37,83 @@ async function readJsonBody(req) {
     req.on("end", () => {
       try {
         resolve(body ? JSON.parse(body) : {});
-      } catch (error) {
+      } catch {
         reject(new Error("Invalid JSON body"));
       }
     });
   });
 }
 
+function cleanClientName(accountName = "") {
+  return accountName
+    .replace(/\s*\(\d+\)\s*$/g, "")
+    .replace(/\s*-\s*GA4\s*\(\d+\)\s*$/gi, "")
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .trim();
+}
+
 async function getAllConnections() {
   const results = {};
 
   for (const integration_id of ALLOWED_INTEGRATIONS) {
-    results[integration_id] = await rnPost("/connections", {
-      integration_id
-    });
+    results[integration_id] = await rnPost("/connections", { integration_id });
   }
 
   return results;
+}
+
+async function buildClientDirectory() {
+  const allConnections = await getAllConnections();
+  const clients = {};
+
+  for (const integration_id of ALLOWED_INTEGRATIONS) {
+    const integrationResponse = allConnections[integration_id];
+
+    const connections =
+      integrationResponse?.data?.connections || [];
+
+    for (const connection of connections) {
+      const accounts = connection.accounts || [];
+
+      for (const account of accounts) {
+        const clientName = cleanClientName(account.account_name);
+
+        if (!clientName) continue;
+
+        if (!clients[clientName]) {
+          clients[clientName] = {
+            name: clientName,
+            integrations: {}
+          };
+        }
+
+        clients[clientName].integrations[integration_id] = {
+          integration_id,
+          connection_key: connection.connection_key,
+          connection_name: connection.connection_name,
+          account_id: account.account_id,
+          account_name: account.account_name,
+          currency: account.currency || null,
+          status: connection.status
+        };
+      }
+    }
+  }
+
+  return Object.values(clients).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+}
+
+function findClient(clients, searchName) {
+  const normalizedSearch = searchName.toLowerCase();
+
+  return clients.find(client =>
+    client.name.toLowerCase() === normalizedSearch
+  ) || clients.find(client =>
+    client.name.toLowerCase().includes(normalizedSearch)
+  );
 }
 
 const server = http.createServer(async (req, res) => {
@@ -66,6 +126,8 @@ const server = http.createServer(async (req, res) => {
         status: "ok",
         message: "Reporting Ninja API bridge is running",
         routes: {
+          clients: "/clients",
+          single_client: "/client/Sunshine%20Joinery",
           all_connections: "/connections",
           single_connection: "/connections/google_ads",
           fields: "/fields/google_ads?data_view=campaign",
@@ -75,8 +137,43 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (url.pathname === "/clients") {
+      const clients = await buildClientDirectory();
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        count: clients.length,
+        clients
+      }, null, 2));
+      return;
+    }
+
+    if (url.pathname.startsWith("/client/")) {
+      const clientName = decodeURIComponent(url.pathname.replace("/client/", ""));
+      const clients = await buildClientDirectory();
+      const client = findClient(clients, clientName);
+
+      if (!client) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          status: "error",
+          message: `Client not found: ${clientName}`
+        }, null, 2));
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        client
+      }, null, 2));
+      return;
+    }
+
     if (url.pathname === "/connections") {
       const data = await getAllConnections();
+
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(data, null, 2));
       return;
@@ -114,9 +211,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const body = {
-        integration_id
-      };
+      const body = { integration_id };
 
       if (data_view) {
         body.data_view = data_view;
