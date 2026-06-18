@@ -481,13 +481,15 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
     if (url.pathname === "/mcp") {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined
-      });
+  const mcpServer = createMcpServer();
 
-      await mcpServer.connect(transport);
-      await transport.handleRequest(req, res);
-      return;
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined
+  });
+
+  await mcpServer.connect(transport);
+  await transport.handleRequest(req, res);
+  return;
     }
 
     if (url.pathname === "/") {
