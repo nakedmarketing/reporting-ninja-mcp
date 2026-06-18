@@ -13,6 +13,133 @@ const ALLOWED_INTEGRATIONS = [
   "instagram_insights"
 ];
 
+const CLIENT_ALIASES = {
+  "IVECO": [
+    "IVECO",
+    "Iveco New Zealand",
+    "IVECO Retail",
+    "Iveco NZ",
+    "IVECO NZ",
+    "IVECO1",
+    "IVECO New Zealand Vans, Trucks & Buses / Sales, Service & Parts (1 Jerry Green Street - Auckland)"
+  ],
+
+  "AB Hair & Makeup": [
+    "AB Hair & Makeup",
+    "AB HAIR AND MAKEUP/ Hairsalon / Brownsbay / NZ",
+    "AB Hair Salon Browns Bay (Shop No.9, 92 Clyde Rd - Auckland)",
+    "abhairandmakeup.co.nz - GA4"
+  ],
+
+  "Better Building": [
+    "Better Building",
+    "Better Building - GA4",
+    "Better Building - Certified Builders Auckland (241D Rosedale Road - Auckland)"
+  ],
+
+  "BRC Advice": [
+  "BRC Advice",
+  "BRC Advice - Personal & Business Risk Insurance Advisers"
+  ],
+
+  "First Rescue": [
+    "First Rescue",
+    "First Rescue NZ Ltd",
+    "First Rescue NZ Ltd Roadside Rescue (Level 4, ANZ Raranga Building - Auckland)",
+    "firstrescue.co.nz",
+    "NM-First-Rescue-NZ"
+  ],
+
+  "Flying Studio": [
+    "Flying Studio",
+    "Flying Studio - GA4",
+    "Flying Studio (129 Hurstmere Road - Auckland)",
+    "NM-Flying-Studio-NZ"
+  ],
+
+  "Garden Lighting Company": [
+    "Garden Lighting Ads",
+    "Garden Lights - GA4 (Active)",
+    "gardenlights.co.nz",
+    "NM-Garden-Lights-NZ",
+    "The Garden Lighting Company",
+    "The Garden Lighting Company - Outdoor Lighting Installation Specialists (764 South Titirangi Road - Auckland)"
+  ],
+
+  "Milford Shops": [
+    "Milford Shops",
+    "Milford Shops - GA4",
+    "NM-Milford-Shops-NZ"
+  ],
+
+  "Naked Marketing": [
+    "Naked Marketing",
+    "Naked Marketing - GA4",
+    "Naked Marketing Agency",
+    "Naked Marketing Digital Agency",
+    "Naked Marketing Digital Marketing Agency Auckland (12/40 Arrenway Drive - Auckland)",
+    "NM-Naked Marketing-NZ",
+    "NM AD Account"
+  ],
+
+  "Oceania Medical": [
+    "Oceania / Defib Store (NM)",
+    "Oceania Medical - GA4",
+    "Oceania Medical Ltd",
+    "Oceania Medical New Zealand"
+  ],
+
+  "Dream Catchers": [
+    "Dream Catchers Albany",
+    "Dream Catchers Education",
+    "Dream Catchers Henderson",
+    "Dream Catchers Preschool",
+    "DreamCatchers Preschool",
+    "DreamCatchers Early Learning Centre",
+    "NM-Dream-Catchers"
+  ],
+
+  "Doric": [
+    "Doric (26/C Triton Drive - North Harbour)",
+    "Doric New Zealand",
+    "doric.co.nz"
+  ],
+
+  "IQ Built": [
+    "IQ Built",
+    "IQBuilt",
+    "IQBuilt Ad's"
+  ],
+
+  "Stockade": [
+    "Stockade",
+    "STOCKade",
+    "STOCKade Ads",
+    "Stockade Fencing Staplers",
+    "Stockade Utility Stapler",
+    "www.stockade.com - GA4"
+  ],
+
+  "The Defib Store": [
+    "The Defib Store",
+    "The Defib Store NZ",
+    "thedefibstore.co.nz - GA4"
+  ],
+
+  "Top Sparx": [
+    "Top Sparx (NM)",
+    "Top Sparx Electrical",
+    "Top Sparx landing pages (go.topsparx.co.nz)",
+    "www.topsparx.co.nz - GA4"
+  ],
+
+  "Trade Products": [
+    "Trade Products",
+    "Trade Products NZ",
+    "www.tradeproducts.co.nz - GA4"
+  ]
+};
+
 const DEFAULT_FIELDS = {
   google_ads: {
     data_view: "campaign",
@@ -226,7 +353,17 @@ async function buildClientDirectory() {
       const accounts = connection.accounts || [];
 
       for (const account of accounts) {
-        const clientName = cleanClientName(account.account_name);
+        const clientName = resolveClientAlias(cleanClientName(account.account_name));
+
+        function resolveClientAlias(clientName) {
+  for (const [canonicalName, aliases] of Object.entries(CLIENT_ALIASES)) {
+    if (aliases.some(alias => alias.toLowerCase() === clientName.toLowerCase())) {
+      return canonicalName;
+    }
+  }
+
+  return clientName;
+}
 
         if (!clientName) continue;
 
