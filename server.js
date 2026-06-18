@@ -25,14 +25,17 @@ const DEFAULT_FIELDS = {
     ]
   },
   facebook_ads: {
-    fields: [
-      "campaign.name",
-      "impressions",
-      "clicks",
-      "spend",
-      "actions"
-    ]
-  },
+  fields: [
+    "campaign_name",
+    "impressions",
+    "clicks",
+    "spend",
+    "actions"
+  ],
+  settings: {
+    attribution_window: "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
+  }
+},
   ga4: {
     fields: [
       "sessions",
