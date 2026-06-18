@@ -1,4 +1,7 @@
 import http from "http";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { z } from "zod";
 
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.REPORTING_NINJA_BASE_URL || "https://api.reportingninja.com/v1";
@@ -23,72 +26,31 @@ const CLIENT_ALIASES = {
     "IVECO1",
     "IVECO New Zealand Vans, Trucks & Buses / Sales, Service & Parts (1 Jerry Green Street - Auckland)"
   ],
-
-  "AB Hair & Makeup": [
-    "AB Hair & Makeup",
-    "AB HAIR AND MAKEUP/ Hairsalon / Brownsbay / NZ",
-    "AB Hair Salon Browns Bay (Shop No.9, 92 Clyde Rd - Auckland)",
-    "abhairandmakeup.co.nz - GA4"
+  "Milford Shops": [
+    "Milford Shops",
+    "Milford Shops - GA4",
+    "NM-Milford-Shops-NZ"
   ],
-
-  "Better Building": [
-    "Better Building",
-    "Better Building - GA4",
-    "Better Building - Certified Builders Auckland (241D Rosedale Road - Auckland)"
+  "Naked Marketing": [
+    "Naked Marketing",
+    "Naked Marketing - GA4",
+    "Naked Marketing Agency",
+    "Naked Marketing Digital Agency",
+    "NM-Naked Marketing-NZ",
+    "NM AD Account"
   ],
-
-  "BRC Advice": [
-  "BRC Advice",
-  "BRC Advice - Personal & Business Risk Insurance Advisers"
-  ],
-
-  "First Rescue": [
-    "First Rescue",
-    "First Rescue NZ Ltd",
-    "First Rescue NZ Ltd Roadside Rescue (Level 4, ANZ Raranga Building - Auckland)",
-    "firstrescue.co.nz",
-    "NM-First-Rescue-NZ"
-  ],
-
   "Flying Studio": [
     "Flying Studio",
     "Flying Studio - GA4",
     "Flying Studio (129 Hurstmere Road - Auckland)",
     "NM-Flying-Studio-NZ"
   ],
-
-  "Garden Lighting Company": [
-    "Garden Lighting Ads",
-    "Garden Lights - GA4 (Active)",
-    "gardenlights.co.nz",
-    "NM-Garden-Lights-NZ",
-    "The Garden Lighting Company",
-    "The Garden Lighting Company - Outdoor Lighting Installation Specialists (764 South Titirangi Road - Auckland)"
+  "First Rescue": [
+    "First Rescue",
+    "First Rescue NZ Ltd",
+    "firstrescue.co.nz",
+    "NM-First-Rescue-NZ"
   ],
-
-  "Milford Shops": [
-    "Milford Shops",
-    "Milford Shops - GA4",
-    "NM-Milford-Shops-NZ"
-  ],
-
-  "Naked Marketing": [
-    "Naked Marketing",
-    "Naked Marketing - GA4",
-    "Naked Marketing Agency",
-    "Naked Marketing Digital Agency",
-    "Naked Marketing Digital Marketing Agency Auckland (12/40 Arrenway Drive - Auckland)",
-    "NM-Naked Marketing-NZ",
-    "NM AD Account"
-  ],
-
-  "Oceania Medical": [
-    "Oceania / Defib Store (NM)",
-    "Oceania Medical - GA4",
-    "Oceania Medical Ltd",
-    "Oceania Medical New Zealand"
-  ],
-
   "Dream Catchers": [
     "Dream Catchers Albany",
     "Dream Catchers Education",
@@ -98,45 +60,11 @@ const CLIENT_ALIASES = {
     "DreamCatchers Early Learning Centre",
     "NM-Dream-Catchers"
   ],
-
-  "Doric": [
-    "Doric (26/C Triton Drive - North Harbour)",
-    "Doric New Zealand",
-    "doric.co.nz"
-  ],
-
-  "IQ Built": [
-    "IQ Built",
-    "IQBuilt",
-    "IQBuilt Ad's"
-  ],
-
-  "Stockade": [
-    "Stockade",
-    "STOCKade",
-    "STOCKade Ads",
-    "Stockade Fencing Staplers",
-    "Stockade Utility Stapler",
-    "www.stockade.com - GA4"
-  ],
-
-  "The Defib Store": [
-    "The Defib Store",
-    "The Defib Store NZ",
-    "thedefibstore.co.nz - GA4"
-  ],
-
-  "Top Sparx": [
-    "Top Sparx (NM)",
-    "Top Sparx Electrical",
-    "Top Sparx landing pages (go.topsparx.co.nz)",
-    "www.topsparx.co.nz - GA4"
-  ],
-
-  "Trade Products": [
-    "Trade Products",
-    "Trade Products NZ",
-    "www.tradeproducts.co.nz - GA4"
+  "Oceania Medical": [
+    "Oceania / Defib Store (NM)",
+    "Oceania Medical - GA4",
+    "Oceania Medical Ltd",
+    "Oceania Medical New Zealand"
   ]
 };
 
@@ -151,38 +79,19 @@ const DEFAULT_FIELDS = {
       "metrics.conversions"
     ]
   },
-
   facebook_ads: {
-    fields: [
-      "campaign_name",
-      "impressions",
-      "clicks",
-      "spend"
-    ],
+    fields: ["campaign_name", "impressions", "clicks", "spend"],
     settings: {
       attribution_window:
         "ATTRIBUTION_MODEL_VIEW_CLICK###VIEW_ATTRIBUTION_WINDOW_1D###CLICK_ATTRIBUTION_WINDOW_7D"
     }
   },
-
   ga4: {
-    fields: [
-      "sessions",
-      "totalUsers",
-      "conversions",
-      "screenPageViews"
-    ]
+    fields: ["sessions", "totalUsers", "conversions", "screenPageViews"]
   },
-
   google_search_console: {
-    fields: [
-      "clicks",
-      "impressions",
-      "ctr",
-      "position"
-    ]
+    fields: ["clicks", "impressions", "ctr", "position"]
   },
-
   google_business_profile: {
     data_view: "performance",
     fields: [
@@ -192,7 +101,6 @@ const DEFAULT_FIELDS = {
       "business_direction_requests"
     ]
   },
-
   facebook_insights: {
     data_view: "page",
     fields: [
@@ -204,7 +112,6 @@ const DEFAULT_FIELDS = {
       "page_daily_follows"
     ]
   },
-
   instagram_insights: {
     data_view: "account",
     fields: [
@@ -230,24 +137,6 @@ async function rnPost(path, body = {}) {
   return await response.json();
 }
 
-async function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = "";
-
-    req.on("data", chunk => {
-      body += chunk.toString();
-    });
-
-    req.on("end", () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch {
-        reject(new Error("Invalid JSON body"));
-      }
-    });
-  });
-}
-
 function cleanClientName(accountName = "") {
   return accountName
     .replace(/\s*\(\d+\)\s*$/g, "")
@@ -257,23 +146,103 @@ function cleanClientName(accountName = "") {
     .trim();
 }
 
+function resolveClientAlias(clientName) {
+  for (const [canonicalName, aliases] of Object.entries(CLIENT_ALIASES)) {
+    if (aliases.some(alias => alias.toLowerCase() === clientName.toLowerCase())) {
+      return canonicalName;
+    }
+  }
+  return clientName;
+}
+
 function sumRows(rows = [], field) {
   return rows.reduce((total, row) => total + Number(row[field] || 0), 0);
 }
 
+function roundNumber(value) {
+  return Number(Number(value || 0).toFixed(2));
+}
+
 function buildReportSummary(performance) {
   const summary = {};
-  function compareValues(current, previous) {
-  const change = current - previous;
-  const change_percent = previous
-    ? Number(((change / previous) * 100).toFixed(2))
-    : null;
+
+  const ga4Rows = performance.ga4?.response?.data?.rows || [];
+  if (ga4Rows.length) {
+    summary.ga4 = {
+      sessions: sumRows(ga4Rows, "sessions"),
+      users: sumRows(ga4Rows, "totalUsers"),
+      conversions: sumRows(ga4Rows, "conversions"),
+      page_views: sumRows(ga4Rows, "screenPageViews")
+    };
+  }
+
+  const googleRows = performance.google_ads?.response?.data?.rows || [];
+  if (googleRows.length) {
+    const impressions = sumRows(googleRows, "metrics.impressions");
+    const clicks = sumRows(googleRows, "metrics.clicks");
+    const spend = roundNumber(sumRows(googleRows, "metrics.cost_micros"));
+    const conversions = sumRows(googleRows, "metrics.conversions");
+
+    summary.google_ads = {
+      impressions,
+      clicks,
+      spend,
+      conversions,
+      ctr: impressions ? roundNumber((clicks / impressions) * 100) : 0,
+      cost_per_conversion: conversions ? roundNumber(spend / conversions) : 0
+    };
+  }
+
+  const metaRows = performance.facebook_ads?.response?.data?.rows || [];
+  if (metaRows.length) {
+    const impressions = sumRows(metaRows, "impressions");
+    const clicks = sumRows(metaRows, "clicks");
+    const spend = roundNumber(sumRows(metaRows, "spend"));
+
+    summary.facebook_ads = {
+      impressions,
+      clicks,
+      spend,
+      ctr: impressions ? roundNumber((clicks / impressions) * 100) : 0
+    };
+  }
+
+  const fbRows = performance.facebook_insights?.response?.data?.rows || [];
+  if (fbRows.length) {
+    summary.facebook_organic = {
+      views: sumRows(fbRows, "page_media_view"),
+      page_views: sumRows(fbRows, "page_views_total"),
+      engagements: sumRows(fbRows, "page_post_engagements"),
+      total_actions: sumRows(fbRows, "page_total_actions"),
+      followers: sumRows(fbRows, "page_follows"),
+      new_follows: sumRows(fbRows, "page_daily_follows")
+    };
+  }
+
+  const igRows = performance.instagram_insights?.response?.data?.rows || [];
+  if (igRows.length) {
+    summary.instagram_organic = {
+      views: sumRows(igRows, "views"),
+      reach: sumRows(igRows, "reach"),
+      accounts_engaged: sumRows(igRows, "accounts_engaged"),
+      engagement: sumRows(igRows, "engagement"),
+      profile_link_taps: sumRows(igRows, "profile_links_taps")
+    };
+  }
+
+  return summary;
+}
+
+function compareValues(current, previous) {
+  const c = roundNumber(current);
+  const p = roundNumber(previous);
+  const change = roundNumber(c - p);
 
   return {
-    current,
-    previous,
+    current: c,
+    previous: p,
     change,
-    change_percent
+    change_percent: p ? roundNumber((change / p) * 100) : null
   };
 }
 
@@ -292,73 +261,6 @@ function buildComparison(currentSummary, previousSummary) {
   }
 
   return comparison;
-}
-
-  const ga4Rows = performance.ga4?.response?.data?.rows || [];
-  if (ga4Rows.length) {
-    summary.ga4 = {
-      sessions: sumRows(ga4Rows, "sessions"),
-      users: sumRows(ga4Rows, "totalUsers"),
-      conversions: sumRows(ga4Rows, "conversions"),
-      page_views: sumRows(ga4Rows, "screenPageViews")
-    };
-  }
-
-  const googleAdsRows = performance.google_ads?.response?.data?.rows || [];
-  if (googleAdsRows.length) {
-    const impressions = sumRows(googleAdsRows, "metrics.impressions");
-    const clicks = sumRows(googleAdsRows, "metrics.clicks");
-    const spend = sumRows(googleAdsRows, "metrics.cost_micros");
-    const conversions = sumRows(googleAdsRows, "metrics.conversions");
-
-    summary.google_ads = {
-      impressions,
-      clicks,
-      spend,
-      conversions,
-      ctr: impressions ? Number(((clicks / impressions) * 100).toFixed(2)) : 0,
-      cost_per_conversion: conversions ? Number((spend / conversions).toFixed(2)) : 0
-    };
-  }
-
-  const facebookAdsRows = performance.facebook_ads?.response?.data?.rows || [];
-  if (facebookAdsRows.length) {
-    const impressions = sumRows(facebookAdsRows, "impressions");
-    const clicks = sumRows(facebookAdsRows, "clicks");
-    const spend = sumRows(facebookAdsRows, "spend");
-
-    summary.facebook_ads = {
-      impressions,
-      clicks,
-      spend,
-      ctr: impressions ? Number(((clicks / impressions) * 100).toFixed(2)) : 0
-    };
-  }
-
-  const facebookRows = performance.facebook_insights?.response?.data?.rows || [];
-  if (facebookRows.length) {
-    summary.facebook_organic = {
-      views: sumRows(facebookRows, "page_media_view"),
-      page_views: sumRows(facebookRows, "page_views_total"),
-      engagements: sumRows(facebookRows, "page_post_engagements"),
-      total_actions: sumRows(facebookRows, "page_total_actions"),
-      followers: sumRows(facebookRows, "page_follows"),
-      new_follows: sumRows(facebookRows, "page_daily_follows")
-    };
-  }
-
-  const instagramRows = performance.instagram_insights?.response?.data?.rows || [];
-  if (instagramRows.length) {
-    summary.instagram_organic = {
-      views: sumRows(instagramRows, "views"),
-      reach: sumRows(instagramRows, "reach"),
-      accounts_engaged: sumRows(instagramRows, "accounts_engaged"),
-      engagement: sumRows(instagramRows, "engagement"),
-      profile_link_taps: sumRows(instagramRows, "profile_links_taps")
-    };
-  }
-
-  return summary;
 }
 
 async function getAllConnections() {
@@ -376,32 +278,15 @@ async function buildClientDirectory() {
   const clients = {};
 
   for (const integration_id of ALLOWED_INTEGRATIONS) {
-    const integrationResponse = allConnections[integration_id];
-    const connections = integrationResponse?.data?.connections || [];
+    const connections = allConnections[integration_id]?.data?.connections || [];
 
     for (const connection of connections) {
-      const accounts = connection.accounts || [];
-
-      for (const account of accounts) {
+      for (const account of connection.accounts || []) {
         const clientName = resolveClientAlias(cleanClientName(account.account_name));
-
-        function resolveClientAlias(clientName) {
-  for (const [canonicalName, aliases] of Object.entries(CLIENT_ALIASES)) {
-    if (aliases.some(alias => alias.toLowerCase() === clientName.toLowerCase())) {
-      return canonicalName;
-    }
-  }
-
-  return clientName;
-}
-
         if (!clientName) continue;
 
         if (!clients[clientName]) {
-          clients[clientName] = {
-            name: clientName,
-            integrations: {}
-          };
+          clients[clientName] = { name: clientName, integrations: {} };
         }
 
         clients[clientName].integrations[integration_id] = {
@@ -417,17 +302,15 @@ async function buildClientDirectory() {
     }
   }
 
-  return Object.values(clients).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  return Object.values(clients).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function findClient(clients, searchName) {
-  const normalizedSearch = searchName.toLowerCase();
+  const normalised = searchName.toLowerCase();
 
   return (
-    clients.find(client => client.name.toLowerCase() === normalizedSearch) ||
-    clients.find(client => client.name.toLowerCase().includes(normalizedSearch))
+    clients.find(client => client.name.toLowerCase() === normalised) ||
+    clients.find(client => client.name.toLowerCase().includes(normalised))
   );
 }
 
@@ -436,35 +319,19 @@ async function getClientPerformance(client, start, end) {
 
   for (const [integration_id, account] of Object.entries(client.integrations)) {
     const config = DEFAULT_FIELDS[integration_id];
-
-    if (!config) {
-      results[integration_id] = {
-        status: "skipped",
-        message: "No default fields configured yet for this integration"
-      };
-      continue;
-    }
+    if (!config) continue;
 
     const queryBody = {
       integration_id,
       connection_key: account.connection_key,
       account_id: account.account_id,
       fields: config.fields,
-      date_range: {
-        preset: "custom",
-        start,
-        end
-      },
+      date_range: { preset: "custom", start, end },
       limit: 100
     };
 
-    if (config.data_view) {
-      queryBody.data_view = config.data_view;
-    }
-
-    if (config.settings) {
-      queryBody.settings = config.settings;
-    }
+    if (config.data_view) queryBody.data_view = config.data_view;
+    if (config.settings) queryBody.settings = config.settings;
 
     const data = await rnPost("/query", queryBody);
 
@@ -472,189 +339,38 @@ async function getClientPerformance(client, start, end) {
       account_name: account.account_name,
       account_id: account.account_id,
       connection_key: account.connection_key,
-      query: queryBody,
       response: data
     };
   }
 
   return results;
 }
-function compareValues(current, previous) {
-  const change = current - previous;
-  const change_percent = previous
-    ? Number(((change / previous) * 100).toFixed(2))
-    : null;
 
-  return {
-    current,
-    previous,
-    change,
-    change_percent
-  };
-}
-
-function buildComparison(currentSummary, previousSummary) {
-  const comparison = {};
-
-  for (const section of Object.keys(currentSummary)) {
-    comparison[section] = {};
-
-    for (const metric of Object.keys(currentSummary[section])) {
-      comparison[section][metric] = compareValues(
-        Number(currentSummary[section][metric] || 0),
-        Number(previousSummary?.[section]?.[metric] || 0)
-      );
-    }
-  }
-
-  return comparison;
-}
-const server = http.createServer(async (req, res) => {
-  try {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-
-    if (url.pathname === "/") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        message: "Reporting Ninja API bridge is running",
-        routes: {
-          clients: "/clients",
-          single_client: "/client/Sunshine%20Joinery",
-          performance: "/client/Sunshine%20Joinery/performance?start=2026-05-01&end=2026-05-31",
-          report: "/client/Sunshine%20Joinery/report?start=2026-05-01&end=2026-05-31",
-          connections: "/connections",
-          fields: "/fields/google_ads?data_view=campaign",
-          query: "/query"
-        }
-      }, null, 2));
-      return;
-    }
-
-    if (url.pathname === "/clients") {
-      const clients = await buildClientDirectory();
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        count: clients.length,
-        clients
-      }, null, 2));
-      return;
-    }
-
-    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/performance")) {
-      const clientName = decodeURIComponent(
-        url.pathname.replace("/client/", "").replace("/performance", "")
-      );
-
-      const start = url.searchParams.get("start");
-      const end = url.searchParams.get("end");
-
-      if (!start || !end) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Please provide start and end dates"
-        }, null, 2));
-        return;
-      }
-
-      const clients = await buildClientDirectory();
-      const client = findClient(clients, clientName);
-
-      if (!client) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: `Client not found: ${clientName}`
-        }, null, 2));
-        return;
-      }
-
-      const performance = await getClientPerformance(client, start, end);
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        client: client.name,
-        date_range: { start, end },
-        performance
-      }, null, 2));
-      return;
-    }
-
-    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/report")) {
-      const clientName = decodeURIComponent(
-        url.pathname.replace("/client/", "").replace("/report", "")
-      );
-
-      const start = url.searchParams.get("start");
-      const end = url.searchParams.get("end");
-
-      if (!start || !end) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Please provide start and end dates"
-        }, null, 2));
-        return;
-      }
-
-      const clients = await buildClientDirectory();
-      const client = findClient(clients, clientName);
-
-      if (!client) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: `Client not found: ${clientName}`
-        }, null, 2));
-        return;
-      }
-
-      const performance = await getClientPerformance(client, start, end);
-      const summary = buildReportSummary(performance);
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        client: client.name,
-        date_range: { start, end },
-        summary
-      }, null, 2));
-      return;
-    }
-
-    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/compare")) {
-  const clientName = decodeURIComponent(
-    url.pathname.replace("/client/", "").replace("/compare", "")
-  );
-
-  const current_start = url.searchParams.get("current_start");
-  const current_end = url.searchParams.get("current_end");
-  const previous_start = url.searchParams.get("previous_start");
-  const previous_end = url.searchParams.get("previous_end");
-
-  if (!current_start || !current_end || !previous_start || !previous_end) {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "error",
-      message: "Please provide current_start, current_end, previous_start and previous_end"
-    }, null, 2));
-    return;
-  }
-
+async function getClientReport(clientName, start, end) {
   const clients = await buildClientDirectory();
   const client = findClient(clients, clientName);
 
   if (!client) {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "error",
-      message: `Client not found: ${clientName}`
-    }, null, 2));
-    return;
+    throw new Error(`Client not found: ${clientName}`);
+  }
+
+  const performance = await getClientPerformance(client, start, end);
+  const summary = buildReportSummary(performance);
+
+  return {
+    status: "ok",
+    client: client.name,
+    date_range: { start, end },
+    summary
+  };
+}
+
+async function compareClientPeriods(clientName, current_start, current_end, previous_start, previous_end) {
+  const clients = await buildClientDirectory();
+  const client = findClient(clients, clientName);
+
+  if (!client) {
+    throw new Error(`Client not found: ${clientName}`);
   }
 
   const currentPerformance = await getClientPerformance(client, current_start, current_end);
@@ -663,159 +379,174 @@ const server = http.createServer(async (req, res) => {
   const currentSummary = buildReportSummary(currentPerformance);
   const previousSummary = buildReportSummary(previousPerformance);
 
-  const comparison = buildComparison(currentSummary, previousSummary);
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({
+  return {
     status: "ok",
     client: client.name,
-    current_period: {
-      start: current_start,
-      end: current_end
-    },
-    previous_period: {
-      start: previous_start,
-      end: previous_end
-    },
+    current_period: { start: current_start, end: current_end },
+    previous_period: { start: previous_start, end: previous_end },
     current_summary: currentSummary,
     previous_summary: previousSummary,
-    comparison
-  }, null, 2));
-  return;
+    comparison: buildComparison(currentSummary, previousSummary)
+  };
 }
-    
-    if (url.pathname.startsWith("/client/")) {
-      const clientName = decodeURIComponent(url.pathname.replace("/client/", ""));
+
+function asText(data) {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data, null, 2)
+      }
+    ]
+  };
+}
+
+/* MCP SERVER */
+
+const mcpServer = new McpServer({
+  name: "reporting-ninja",
+  version: "1.0.0"
+});
+
+mcpServer.registerTool(
+  "list_clients",
+  {
+    title: "List Clients",
+    description: "List all clients available from Reporting Ninja.",
+    inputSchema: {}
+  },
+  async () => {
+    const clients = await buildClientDirectory();
+    return asText({
+      status: "ok",
+      count: clients.length,
+      clients: clients.map(client => ({
+        name: client.name,
+        integrations: Object.keys(client.integrations)
+      }))
+    });
+  }
+);
+
+mcpServer.registerTool(
+  "get_client_report",
+  {
+    title: "Get Client Report",
+    description: "Get a summarised marketing performance report for a client and date range.",
+    inputSchema: {
+      client_name: z.string(),
+      start: z.string(),
+      end: z.string()
+    }
+  },
+  async ({ client_name, start, end }) => {
+    return asText(await getClientReport(client_name, start, end));
+  }
+);
+
+mcpServer.registerTool(
+  "compare_client_periods",
+  {
+    title: "Compare Client Periods",
+    description: "Compare a client's marketing performance across two date ranges.",
+    inputSchema: {
+      client_name: z.string(),
+      current_start: z.string(),
+      current_end: z.string(),
+      previous_start: z.string(),
+      previous_end: z.string()
+    }
+  },
+  async ({ client_name, current_start, current_end, previous_start, previous_end }) => {
+    return asText(
+      await compareClientPeriods(
+        client_name,
+        current_start,
+        current_end,
+        previous_start,
+        previous_end
+      )
+    );
+  }
+);
+
+/* HTTP SERVER */
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+
+    if (url.pathname === "/mcp") {
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined
+      });
+
+      await mcpServer.connect(transport);
+      await transport.handleRequest(req, res);
+      return;
+    }
+
+    if (url.pathname === "/") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        message: "Reporting Ninja MCP server is running",
+        mcp_endpoint: "/mcp",
+        tools: [
+          "list_clients",
+          "get_client_report",
+          "compare_client_periods"
+        ]
+      }, null, 2));
+      return;
+    }
+
+    if (url.pathname === "/clients") {
       const clients = await buildClientDirectory();
-      const client = findClient(clients, clientName);
-
-      if (!client) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: `Client not found: ${clientName}`
-        }, null, 2));
-        return;
-      }
-
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", client }, null, 2));
+      res.end(JSON.stringify({ status: "ok", count: clients.length, clients }, null, 2));
       return;
     }
 
-    if (url.pathname === "/connections") {
-      const data = await getAllConnections();
+    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/report")) {
+      const clientName = decodeURIComponent(
+        url.pathname.replace("/client/", "").replace("/report", "")
+      );
+      const start = url.searchParams.get("start");
+      const end = url.searchParams.get("end");
 
+      const report = await getClientReport(clientName, start, end);
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data, null, 2));
+      res.end(JSON.stringify(report, null, 2));
       return;
     }
 
-    if (url.pathname.startsWith("/connections/")) {
-      const integration_id = url.pathname.split("/")[2];
+    if (url.pathname.startsWith("/client/") && url.pathname.endsWith("/compare")) {
+      const clientName = decodeURIComponent(
+        url.pathname.replace("/client/", "").replace("/compare", "")
+      );
 
-      if (!ALLOWED_INTEGRATIONS.includes(integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
-      const data = await rnPost("/connections", { integration_id });
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data, null, 2));
-      return;
-    }
-
-    if (url.pathname.startsWith("/fields/")) {
-      const integration_id = url.pathname.split("/")[2];
-      const data_view = url.searchParams.get("data_view");
-
-      if (!ALLOWED_INTEGRATIONS.includes(integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
-      const body = { integration_id };
-
-      if (data_view) {
-        body.data_view = data_view;
-      }
-
-      const data = await rnPost("/fields", body);
+      const result = await compareClientPeriods(
+        clientName,
+        url.searchParams.get("current_start"),
+        url.searchParams.get("current_end"),
+        url.searchParams.get("previous_start"),
+        url.searchParams.get("previous_end")
+      );
 
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data, null, 2));
-      return;
-    }
-
-    if (url.pathname === "/query") {
-      if (req.method !== "POST") {
-        res.writeHead(405, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Use POST for /query"
-        }, null, 2));
-        return;
-      }
-
-      const requestBody = await readJsonBody(req);
-
-      if (!ALLOWED_INTEGRATIONS.includes(requestBody.integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed"
-        }, null, 2));
-        return;
-      }
-
-      const queryBody = {
-        integration_id: requestBody.integration_id,
-        connection_key: requestBody.connection_key,
-        account_id: requestBody.account_id,
-        data_view: requestBody.data_view,
-        fields: requestBody.fields,
-        date_range: {
-          preset: "custom",
-          start: requestBody.start,
-          end: requestBody.end
-        },
-        limit: requestBody.limit || 100
-      };
-
-      if (requestBody.settings) {
-        queryBody.settings = requestBody.settings;
-      }
-
-      const data = await rnPost("/query", queryBody);
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data, null, 2));
+      res.end(JSON.stringify(result, null, 2));
       return;
     }
 
     res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "error",
-      message: "Route not found"
-    }, null, 2));
+    res.end(JSON.stringify({ status: "error", message: "Route not found" }, null, 2));
   } catch (error) {
     res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "error",
-      message: error.message
-    }, null, 2));
+    res.end(JSON.stringify({ status: "error", message: error.message }, null, 2));
   }
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Reporting Ninja MCP server running on port ${PORT}`);
 });
