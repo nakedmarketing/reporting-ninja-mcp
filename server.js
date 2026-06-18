@@ -3,15 +3,12 @@ import http from "http";
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.REPORTING_NINJA_BASE_URL || "https://api.reportingninja.com/v1";
 
-const ALLOWED_INTEGRATIONS = [
-  "ga4",
-  "google_ads",
-  "google_search_console",
-  "google_business_profile",
-  "facebook_ads",
-  "facebook_insights",
-  "instagram_insights"
-];
+const TEST_CLIENT = {
+  client_name: "Sunshine Joinery",
+  integration_id: "google_ads",
+  connection_key: "hello@nakedmarketing.co",
+  account_id: "7250547764"
+};
 
 async function rnPost(path, body = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -26,18 +23,6 @@ async function rnPost(path, body = {}) {
   return await response.json();
 }
 
-async function getAllConnections() {
-  const results = {};
-
-  for (const integration_id of ALLOWED_INTEGRATIONS) {
-    results[integration_id] = await rnPost("/connections", {
-      integration_id
-    });
-  }
-
-  return results;
-}
-
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -46,41 +31,49 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
         status: "ok",
-        message: "Reporting Ninja connection tester is running",
-        available_routes: [
-          "/connections",
-          "/connections/google_ads",
-          "/connections/facebook_ads",
-          "/connections/ga4",
-          "/connections/google_search_console",
-          "/connections/google_business_profile",
-          "/connections/facebook_insights",
-          "/connections/instagram_insights"
+        message: "Reporting Ninja test server is running",
+        routes: [
+          "/sunshine/fields",
+          "/sunshine/query"
         ]
       }, null, 2));
       return;
     }
 
-    if (url.pathname === "/connections") {
-      const data = await getAllConnections();
+    if (url.pathname === "/sunshine/fields") {
+      const data = await rnPost("/fields", {
+        integration_id: TEST_CLIENT.integration_id,
+        connection_key: TEST_CLIENT.connection_key,
+        account_id: TEST_CLIENT.account_id,
+        data_view: "campaign"
+      });
+
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(data, null, 2));
       return;
     }
 
-    if (url.pathname.startsWith("/connections/")) {
-      const integration_id = url.pathname.split("/")[2];
+    if (url.pathname === "/sunshine/query") {
+      const data = await rnPost("/query", {
+        integration_id: TEST_CLIENT.integration_id,
+        connection_key: TEST_CLIENT.connection_key,
+        account_id: TEST_CLIENT.account_id,
+        data_view: "campaign",
+        fields: [
+          "campaign.name",
+          "metrics.impressions",
+          "metrics.clicks",
+          "metrics.cost_micros",
+          "metrics.conversions"
+        ],
+        date_range: {
+          preset: "custom",
+          start_date: "2026-05-01",
+          end_date: "2026-05-31"
+        },
+        limit: 100
+      });
 
-      if (!ALLOWED_INTEGRATIONS.includes(integration_id)) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "error",
-          message: "Integration not allowed or not configured"
-        }, null, 2));
-        return;
-      }
-
-      const data = await rnPost("/connections", { integration_id });
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(data, null, 2));
       return;
