@@ -17,6 +17,60 @@ const ALLOWED_INTEGRATIONS = [
 ];
 
 const CLIENT_ALIASES = {
+  "Auckland Curling Club": [
+    "Auckland Curling",
+    "Auckland Curling Club",
+    "Website"
+  ],
+
+  "Cowperthwaite Roofing": [
+    "Cowperthwaite Roofing",
+    "Cowperthwaite Roofing - Roofing Company (35N Maurice Road - Auckland)",
+    "Auckland Roofing"
+  ],
+
+  "Immigration Insurance": [
+    "Immigration Insurance",
+    "BRC Advice",
+    "BRC Advice - Personal & Business Risk Insurance Advisers"
+  ],
+
+  "Collab Interiors": [
+    "Collab Interiors",
+    "Collab Industries",
+    "Hayley O'Connor | Interior Design Studio + Home Staging",
+    "Hayley O’Connor | Interior Design Studio + Home Staging"
+  ],
+
+  "Doric": [
+    "Doric",
+    "Doric (26/C Triton Drive - North Harbour)",
+    "Doric New Zealand",
+    "doric.co.nz"
+  ],
+
+  "Tarpaulin Makers": [
+    "GA4 - Tarpaulin Makers",
+    "Tarpaulin Makers",
+    "Tarpaulin Makers (B.O.P) Limited (CURRENT)",
+    "Tarpaulin Makers BOP",
+    "TarpMakers"
+  ],
+
+  "Garden Lights": [
+    "Garden Lighting Ads",
+    "Garden Lights - GA4 (Active)",
+    "gardenlights.co.nz",
+    "NM-Garden-Lights-NZ",
+    "The Garden Lighting Company",
+    "The Garden Lighting Company (764 South Titirangi Road - Auckland)"
+  ],
+
+  "Halogen Avenue": [
+    "Halogen Avenue",
+    "Halogen Avenue Commercial AV and Lighting Solutions (12/40 Arrenway Drive - Auckland)"
+  ],
+
   "IVECO": [
     "IVECO",
     "Iveco New Zealand",
@@ -26,47 +80,179 @@ const CLIENT_ALIASES = {
     "IVECO1",
     "IVECO New Zealand Vans, Trucks & Buses / Sales, Service & Parts (1 Jerry Green Street - Auckland)"
   ],
+
   "Milford Shops": [
     "Milford Shops",
     "Milford Shops - GA4",
     "NM-Milford-Shops-NZ"
   ],
+
   "Naked Marketing": [
     "Naked Marketing",
     "Naked Marketing - GA4",
     "Naked Marketing Agency",
     "Naked Marketing Digital Agency",
+    "Naked Marketing Digital Marketing Agency Auckland (12/40 Arrenway Drive - Auckland)",
     "NM-Naked Marketing-NZ",
     "NM AD Account"
   ],
-  "Flying Studio": [
-    "Flying Studio",
-    "Flying Studio - GA4",
-    "Flying Studio (129 Hurstmere Road - Auckland)",
-    "NM-Flying-Studio-NZ"
-  ],
-  "First Rescue": [
-    "First Rescue",
-    "First Rescue NZ Ltd",
-    "firstrescue.co.nz",
-    "NM-First-Rescue-NZ"
-  ],
-  "Dream Catchers": [
-    "Dream Catchers Albany",
-    "Dream Catchers Education",
-    "Dream Catchers Henderson",
-    "Dream Catchers Preschool",
-    "DreamCatchers Preschool",
-    "DreamCatchers Early Learning Centre",
-    "NM-Dream-Catchers"
-  ],
+
   "Oceania Medical": [
     "Oceania / Defib Store (NM)",
     "Oceania Medical - GA4",
     "Oceania Medical Ltd",
     "Oceania Medical New Zealand"
+  ],
+
+  "The Defib Store": [
+    "The Defib Store",
+    "The Defib Store NZ",
+    "thedefibstore.co.nz - GA4"
+  ],
+
+  "RUSA Construction": [
+    "Rusa",
+    "Rusa Construction",
+    "RUSA Construction"
+  ],
+
+  "Sunshine Joinery": [
+    "Sunshine Joinery"
+  ],
+
+  "Top Sparx": [
+    "Top Sparx (NM)",
+    "Top Sparx Electrical",
+    "Top Sparx landing pages (go.topsparx.co.nz)",
+    "www.topsparx.co.nz - GA4"
+  ],
+
+  "Trade Products": [
+    "Trade Products",
+    "Trade Products NZ",
+    "www.tradeproducts.co.nz - GA4"
   ]
 };
+const EXCLUDED_CLIENT_NAMES = [
+  "Tarpaulin Makers - GA4 (don't use)",
+
+  "AB Hair",
+  "AB Hair & Makeup",
+  "AB HAIR AND MAKEUP/ Hairsalon / Brownsbay / NZ",
+  "AB Hair Salon Browns Bay (Shop No.9, 92 Clyde Rd - Auckland)",
+  "abhairandmakeup.co.nz - GA4",
+
+  "Allied Flooring Retail",
+  "Allied Flooring Retail - GA4",
+  "Absolute Kitchens",
+  "Aperol Spritz",
+  "Balanced Spine",
+  "Balanced Spine - GA4",
+  "balancedspine.co.nz",
+  "Better Building",
+  "Better Building - Certified Builders Auckland (241D Rosedale Road - Auckland)",
+  "Better Building - GA4",
+  "Boardman Removals",
+  "Boardman_removals",
+  "Boardmans Transport - GA4",
+  "Change Hypnosis",
+  "Craftsmen Grinding",
+  "Craftsmen Grinding (45 Croft Lane, Riverhead - Auckland)",
+  "Creative Displays",
+  "Dream Catchers",
+  "Dream Catchers Albany",
+  "Dream Catchers Education",
+  "Dream Catchers Henderson",
+  "Dream Catchers Preschool",
+  "DreamCatchers Preschool",
+  "DreamCatchers Early Learning Centre",
+  "ENS (Explore North Shore)",
+  "Explore North Shore - GA4",
+  "Explore North Shore NZ",
+  "First Rescue",
+  "First Rescue NZ Ltd",
+  "First Rescue NZ Ltd Roadside Rescue (Level 4, ANZ Raranga Building - Auckland)",
+  "firstrescue.co.nz",
+  "NM-First-Rescue-NZ",
+  "Flying Studio",
+  "Flying Studio - GA4",
+  "Flying Studio (129 Hurstmere Road - Auckland)",
+  "NM-Flying-Studio-NZ",
+  "FunctionEight Ltd.",
+  "Gear Junkie",
+  "Gear Junkie UA - GA4",
+  "Glass Case by Plumbob",
+  "Half Moon Bay Marina",
+  "Half Moon Bay Marina - GA4",
+  "Half Moon Bay Marina Auckland",
+  "IQ Built",
+  "IQBuilt",
+  "IQBuilt Ad's",
+  "Lulu Hoonhout",
+  "Living Chiropractic",
+  "NM-Living-Chiropractic-NZ",
+  "Luminate Finance",
+  "Luminate Finance - GA4",
+  "Luminate Home Loans",
+  "Luminate Home Loans - GA4",
+  "Mello Technologies",
+  "www.mello.co.nz - GA4",
+  "www.mellodigital.com.au - GA4",
+  "Michelle Gill",
+  "Mike Ansari",
+  "Mike Ansari Life Transformer",
+  "Mobile Planet",
+  "Mobile Planet (Shore City) (SG23 Mobile Planet - Auckland)",
+  "Moving House",
+  "Moving House - GA4",
+  "NM-Moving-House-NZ",
+  "Muriwai Estate",
+  "Muriwai Estate New Zealand",
+  "Network Migration NZ",
+  "Network Migration Services",
+  "Network Migration Services (Pty) Ltd (Johannesburg)",
+  "NM-Albany-Yoga-Room-NZ",
+  "NM-Explore-North-Shore",
+  "NM-Total-Roofing-NZ",
+  "NM-Windsor-Wealth-NZ",
+  "NZ Construction Placements",
+  "NZC - New Zealand Car Ltd. (Greenlane, Auckland)",
+  "NZC Cars - GA4",
+  "Offers.thecrate.co.nz - GA4",
+  "www.thecrate.co.nz - GA4",
+  "Omni Tech",
+  "Omni Tech (Silverdale) (Shop 15 Omni Tech - Auckland)",
+  "OMNI TECH SILVERDALE LIMITED",
+  "Paper Plus",
+  "Paper Plus Whangaparaoa",
+  "Paslode ANZ",
+  "Peerless Records",
+  "People Associates",
+  "People Associates (145 Khyber Pass Road - Auckland)",
+  "People Associates (OLD)",
+  "Peter Mortlock",
+  "PSYCH 317 Semester One 2021",
+  "Reach Potential",
+  "RosterLab",
+  "Sïmplé",
+  "Sticky Business",
+  "Sticky Business - GA4",
+  "Stockade",
+  "STOCKade",
+  "STOCKade Ads",
+  "Stockade Fencing Staplers",
+  "Stockade Utility Stapler",
+  "www.stockade.com - GA4",
+  "Stropwinda",
+  "Tangos Shoes",
+  "Ten Feet Tall",
+  "Tenderwins GA4",
+  "The-Display-Store",
+  "Vespa Auckland",
+  "Wikus Erasmus",
+  "www.windsorwealth.co.nz",
+  "Zoe and Me Dog Walking North Shore"
+];
 
 const DEFAULT_FIELDS = {
   google_ads: {
@@ -280,27 +466,41 @@ async function buildClientDirectory() {
   for (const integration_id of ALLOWED_INTEGRATIONS) {
     const connections = allConnections[integration_id]?.data?.connections || [];
 
-    for (const connection of connections) {
-      for (const account of connection.accounts || []) {
-        const clientName = resolveClientAlias(cleanClientName(account.account_name));
-        if (!clientName) continue;
+for (const connection of connections) {
+  for (const account of connection.accounts || []) {
 
-        if (!clients[clientName]) {
-          clients[clientName] = { name: clientName, integrations: {} };
-        }
+    const rawClientName = cleanClientName(account.account_name);
 
-        clients[clientName].integrations[integration_id] = {
-          integration_id,
-          connection_key: connection.connection_key,
-          connection_name: connection.connection_name,
-          account_id: account.account_id,
-          account_name: account.account_name,
-          currency: account.currency || null,
-          status: connection.status
-        };
-      }
+    if (
+      EXCLUDED_CLIENT_NAMES.some(
+        name => name.toLowerCase() === rawClientName.toLowerCase()
+      )
+    ) {
+      continue;
     }
+
+    const clientName = resolveClientAlias(rawClientName);
+
+    if (!clientName) continue;
+
+    if (!clients[clientName]) {
+      clients[clientName] = {
+        name: clientName,
+        integrations: {}
+      };
+    }
+
+    clients[clientName].integrations[integration_id] = {
+      integration_id,
+      connection_key: connection.connection_key,
+      connection_name: connection.connection_name,
+      account_id: account.account_id,
+      account_name: account.account_name,
+      currency: account.currency || null,
+      status: connection.status
+    };
   }
+}
 
   return Object.values(clients).sort((a, b) => a.name.localeCompare(b.name));
 }
