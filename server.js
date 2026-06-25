@@ -340,7 +340,15 @@ function resolveClientAlias(clientName) {
   }
   return clientName;
 }
+async function getAllConnections() {
+  const results = {};
 
+  for (const integration_id of ALLOWED_INTEGRATIONS) {
+    results[integration_id] = await rnPost("/connections", {
+      integration_id
+    });
+  return results;
+}
 function sumRows(rows = [], field) {
   return rows.reduce((total, row) => total + Number(row[field] || 0), 0);
 }
