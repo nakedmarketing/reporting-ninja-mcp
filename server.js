@@ -449,16 +449,6 @@ function buildComparison(currentSummary, previousSummary) {
   return comparison;
 }
 
-async function getAllConnections() {
-  const results = {};
-
-  for (const integration_id of ALLOWED_INTEGRATIONS) {
-    results[integration_id] = await rnPost("/connections", { integration_id });
-  }
-
-  return results;
-}
-
 async function buildClientDirectory() {
   const allConnections = await getAllConnections();
   const clients = {};
@@ -466,40 +456,45 @@ async function buildClientDirectory() {
   for (const integration_id of ALLOWED_INTEGRATIONS) {
     const connections = allConnections[integration_id]?.data?.connections || [];
 
-for (const connection of connections) {
-  for (const account of connection.accounts || []) {
+    for (const connection of connections) {
+      for (const account of connection.accounts || []) {
+        const rawClientName = cleanClientName(account.account_name);
 
-    const rawClientName = cleanClientName(account.account_name);
+        if (
+          EXCLUDED_CLIENT_NAMES.some(
+            name => name.toLowerCase() === rawClientName.toLowerCase()
+          )
+        ) {
+          continue;
+        }
 
-    if (
-      EXCLUDED_CLIENT_NAMES.some(
-        name => name.toLowerCase() === rawClientName.toLowerCase()
-      )
-    ) {
-      continue;
+        const clientName = resolveClientAlias(rawClientName);
+
+        if (!clientName) continue;
+
+        if (!clients[clientName]) {
+          clients[clientName] = {
+            name: clientName,
+            integrations: {}
+          };
+        }
+
+        clients[clientName].integrations[integration_id] = {
+          integration_id,
+          connection_key: connection.connection_key,
+          connection_name: connection.connection_name,
+          account_id: account.account_id,
+          account_name: account.account_name,
+          currency: account.currency || null,
+          status: connection.status
+        };
+      }
     }
-
-    const clientName = resolveClientAlias(rawClientName);
-
-    if (!clientName) continue;
-
-    if (!clients[clientName]) {
-      clients[clientName] = {
-        name: clientName,
-        integrations: {}
-      };
-    }
-
-    clients[clientName].integrations[integration_id] = {
-      integration_id,
-      connection_key: connection.connection_key,
-      connection_name: connection.connection_name,
-      account_id: account.account_id,
-      account_name: account.account_name,
-      currency: account.currency || null,
-      status: connection.status
-    };
   }
+
+  return Object.values(clients).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 }
 
 function findClient(clients, searchName) {
