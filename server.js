@@ -338,8 +338,10 @@ function resolveClientAlias(clientName) {
       return canonicalName;
     }
   }
+
   return clientName;
 }
+
 async function getAllConnections() {
   const results = {};
 
@@ -347,6 +349,8 @@ async function getAllConnections() {
     results[integration_id] = await rnPost("/connections", {
       integration_id
     });
+  }
+
   return results;
 }
 function sumRows(rows = [], field) {
