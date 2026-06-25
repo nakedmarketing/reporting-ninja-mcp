@@ -502,9 +502,6 @@ for (const connection of connections) {
   }
 }
 
-  return Object.values(clients).sort((a, b) => a.name.localeCompare(b.name));
-}
-
 function findClient(clients, searchName) {
   const normalised = searchName.toLowerCase();
 
