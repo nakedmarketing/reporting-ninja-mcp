@@ -13,6 +13,7 @@ const ALLOWED_INTEGRATIONS = [
   "google_business_profile",
   "facebook_ads",
   "facebook_insights",
+  "linkedin_pages",
   "instagram_insights"
 ];
 
