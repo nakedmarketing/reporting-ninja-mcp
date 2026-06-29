@@ -53,6 +53,7 @@ const CLIENT_ALIASES = {
   "Tarpaulin Makers": [
     "GA4 - Tarpaulin Makers",
     "Tarpaulin Makers",
+    "Tarpaulin Makers (urn:li:organization:18859654)",
     "Tarpaulin Makers (B.O.P) Limited (CURRENT)",
     "Tarpaulin Makers BOP",
     "TarpMakers"
@@ -75,6 +76,7 @@ const CLIENT_ALIASES = {
   "IVECO": [
     "IVECO",
     "Iveco New Zealand",
+    "IVECO New Zealand (urn:li:organization:18830816)",
     "IVECO Retail",
     "Iveco NZ",
     "IVECO NZ",
@@ -92,6 +94,7 @@ const CLIENT_ALIASES = {
     "Naked Marketing",
     "Naked Marketing - GA4",
     "Naked Marketing Agency",
+    "Naked Marketing Agency (urn:li:organization:72043939)",
     "Naked Marketing Digital Agency",
     "Naked Marketing Digital Marketing Agency Auckland (12/40 Arrenway Drive - Auckland)",
     "NM-Naked Marketing-NZ",
